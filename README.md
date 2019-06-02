@@ -1,7 +1,7 @@
 
 # About
 
-(https://github.com/lalawue/MarkdownProjectCompositor)[MarkdownProjectCompositor] is a static markdown generator with compositor, using (https://github.com/commonmark/cmark)[CommonMark] or (https://github.com/github/cmark-gfm)[cmark-gfm] as its backend.
+[MarkdownProjectCompositor](https://github.com/lalawue/MarkdownProjectCompositor) is a static markdown generator with compositor, using [CommonMark](https://github.com/commonmark/cmark), or [cmark-gfm](https://github.com/github/cmark-gfm) as its backend.
 
 # Features
 
