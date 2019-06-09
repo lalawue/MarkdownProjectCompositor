@@ -10,37 +10,44 @@ local kCMarkProgram = "cmark-gfm"
 local kCMarkParams = " -t html --unsafe --github-pre-lang "
 local kTmpFilePath = "/tmp/MarkdownSiteGeneratorTempFile"
 
-local argConfigFile = ...
+local argConfigFile, argBasePath = ...
 
 local fs = {}                   -- fs interface
 local dbg = {}                  -- debug interface
-local cmark = {}                -- cmark interface
+local md = {}                   -- markdown parser interface
 local site = {}                 -- site inteface
 
 -- config file example
 -- {
---    source = "/Markdown/Source/Path",
---    bulid = "/Html/Output/Path",
+--    source = "/Markdown/Source/Path", -- will be modified by compositor
+--    bulid = "/Html/Output/Path",      -- will be modified by compositor
+--    suffix = ".html",                 -- output suffix
+--    program = "cmark-gfm",            -- program used
+--    params = " -t html --unsafe --github-pre-lang ",    -- params
+--    tmpfile = "/tmp/MarkdownProjectCompositorTempFile", -- temp file
 --    projs = {
---       [1] = {
+--       {
+--          res = true,      -- resouces dir, when true do not build output
 --          dir = "SourceSubPath",
 --          files = {
 --             -- file names filled by compositor
---          },         
---          preProcess = function( config, proj, filename, inFile )
---             -- process temp inputFile
+--          },
+--          prepare = function( config, proj )
+--             -- prepare proj, sort/insert/delete proj files to be processed by cmark
+--          end,
+--          body = function( config, proj, filename, content )
+--             -- return modified source content before cmark process
 --          end,
 --          header = function( config, porj, filename )
---             -- return content append in head
+--             -- return content append in dest head
 --          end,
 --          footer = function( config, proj, filename )
---             -- return content append in tail
+--             -- return content append in dest tail
 --          end,
 --       },
 --    },
 --    -- user defines below
 --    user = {
---       myTable = {},
 --       readFile = function( path )
 --       end,
 --       writeFile = function( path, content )
@@ -94,8 +101,10 @@ function fs.isDir( path )
 end
 
 function fs.makeDir( path )
-   if type(path) == "string" then
-      os.execute("mkdir -p " .. path)
+   if type(path) == "string" and not fs.isDir(path) then
+      local cmd = "mkdir -p " .. path
+      dbg.print(cmd)
+      os.execute(cmd)
    end
 end
 
@@ -156,49 +165,38 @@ function fs.listFiles(path, inputTable)
    return tbl
 end
 
-function fs.fillProjFiles( config )
-   local validProjs = 0   
-   if config then
-      local i = 0
-      for _, proj in ipairs(config.projs) do
-         proj.files = fs.listFiles(config.source .. '/' .. proj.dir)
-         validProjs = validProjs + #proj.files
-      end
-   end
-   return validProjs > 0
-end
-
 --
 -- cmark function
 --
 
-function cmark.compositeHeader( config, proj, filename, outFile )
-   if type(proj.header) == "function" then
-      local content = proj.header(config, proj, filename)
+function md.prepareTempSource( config, proj, filename, sourceFile, tempFile )
+   local content = fs.readContent( sourceFile )   
+   if proj.body then
+      content = proj.body( config, proj, filename, content )
+   end
+   fs.writeContent( tempFile, content )
+end
+
+function md.compositeHeader( config, proj, filename, destFile )
+   if proj.header then
+      local content = proj.header( config, proj, filename )
       if type(content) == "string" then      
-         assert( fs.writeContent(outFile, content) )
+         assert( fs.writeContent( destFile, content ) )
       end
    end
 end
 
-function cmark.compositeFooter( config, proj, filename, outFile )
-   if type(proj.footer) == "function" then
-      local content = proj.footer(config, proj, filename)
+function md.compositeBody( config, proj, filename, tempFile, destFile )
+   dbg.print("output: " .. destFile )
+   os.execute( kCMarkProgram .. kCMarkParams .. tempFile .. " >> " .. destFile )
+end
+
+function md.compositeFooter( config, proj, filename, destFile )
+   if proj.footer then
+      local content = proj.footer( config, proj, filename )
       if type(content) == "string" then
-         assert( fs.writeContent(outFile, content, true) )
+         assert( fs.writeContent( destFile, content, true ) )
       end
-   end
-end
-
-function cmark.compositeBody( config, proj, filename, inFile, outFile )
-   dbg.print("output: " .. outFile )
-   os.execute( kCMarkProgram .. kCMarkParams .. inFile .. " >> " .. outFile )
-end
-
-function cmark.preProcess( config, proj, filename, inFile, outFile )
-   fs.copyFile(inFile, outFile)
-   if type(proj.preProcess) == "function" then
-      proj.preProcess( config, proj, filename, outFile)
    end
 end
 
@@ -214,26 +212,30 @@ function site.isArgsValid( config )
    return true
 end
 
+function site.fillProjFiles( config )
+   local validProjs = 0   
+   if config then
+      local i = 0
+      for _, proj in ipairs(config.projs) do
+         if proj.res then
+            proj.files = fs.listFiles(config.build .. '/' .. proj.dir)            
+         else
+            proj.files = fs.listFiles(config.source .. '/' .. proj.dir)
+            validProjs = validProjs + #proj.files
+         end
+      end
+   end
+   return validProjs > 0
+end
+
 function site.loadConfig( path )
    if fs.isDir( path ) then
       dbg.print("invalid config path")
       return nil
    end
 
-   local content = fs.readContent(path)
-   if type(content) ~= "string" then
-      dbg.print("invalid config content")
-      return nil
-   end
-   
-   local func = load("return " .. content)
-   if type(func) ~= "function" then
-      dbg.print("invalid config return type")
-      return nil
-   end
+   local config = dofile(path)
 
-   local result, config = pcall(func)
-   assert(result)
    assert(type(config) == "table")
    assert(type(config.source) == "string")
    assert(type(config.build) == "string")
@@ -242,54 +244,67 @@ function site.loadConfig( path )
    for _, proj in ipairs(config.projs) do
       assert(type(proj) == "table")
       assert(type(proj.dir) == "string")
-      assert(type(proj.header) == "function")
-      assert(type(proj.footer) == "function")
+      if not proj.res then
+         assert((not proj.prepare) or (type(proj.prepare) == "function"))
+         assert((not proj.body) or (type(proj.body) == "function"))
+         assert((not proj.header) or (type(proj.header) == "function"))
+         assert((not proj.footer) or (type(proj.footer) == "function"))
+      end
    end
    return config
 end
 
 function site.processProjects( config )
-   assert( type(config) == "table")
-   if fs.fillProjFiles( config ) then
-      
-      -- 
-      dbg.print("----- using config -----")
-      dbg.print( config )
-      dbg.print("----- ----- ----- -----")
-      --
+   if site.fillProjFiles( config ) then
+
+      -- dbg.print("----- using config -----")
+      -- dbg.print( config )
+      -- dbg.print("----- ----- ----- -----")
       
       for _, proj in ipairs(config.projs) do
          
          local inPath = config.source .. "/" .. proj.dir .. "/"         
          local outPath = config.build .. "/" .. proj.dir .. "/"
 
-         fs.makeDir( outPath )
+         if not proj.res then
+            dbg.print(string.format("\nproj: %s", proj.dir))
+            fs.makeDir( outPath )
 
-         local i = 0
-         while true do
-            i = i + 1
-            
-            if i > #proj.files then
-               break
+            if proj.prepare then
+               proj.prepare( config, proj )
             end
             
-            local filename = proj.files[i]
-            local inFile = kTmpFilePath
-            local outFile = outPath .. filename .. ".html"
+            local i = 0
+            while true do
+               i = i + 1
 
-            cmark.preProcess( config, proj, filename, inPath .. filename, inFile )
-            cmark.compositeHeader( config, proj, filename, outFile)
-            cmark.compositeBody( config, proj, filename, inFile, outFile)
-            cmark.compositeFooter( config, proj, filename, outFile)
+               if i > #proj.files then
+                  break
+               end
+
+               local filename = proj.files[i]
+               local sourceFile = inPath .. filename -- origin source
+               local tempFile = kTmpFilePath         -- modified source
+               local destFile = outPath .. filename .. (config.suffix or "") -- formated output 
+
+               md.prepareTempSource( config, proj, filename, sourceFile, tempFile )
+               md.compositeHeader( config, proj, filename, destFile )
+               md.compositeBody( config, proj, filename, tempFile, destFile )
+               md.compositeFooter( config, proj, filename, destFile )
+            end
          end
       end
    end
 end
 
-function site.main( configFile )
+function site.main( configFile, basePath )
    if site.isArgsValid( configFile ) then
       local config = site.loadConfig( configFile )
       assert(config)
+      if basePath then
+         config.source = basePath .. "/" .. config.source
+         config.build = basePath .. "/" .. config.build
+      end
       site.processProjects( config )
    end
 end
@@ -297,4 +312,4 @@ end
 --
 -- Main
 --
-site.main( argConfigFile )
+site.main( argConfigFile, argBasePath )
