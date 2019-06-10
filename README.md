@@ -13,7 +13,7 @@
 # Features
 
 - composite markdown source with different header, footer or style sheet in different project dir
-- with pre process body step, the compositor can exten your own markdown syntax
+- with pre process body step, the compositor can extend your own markdown syntax
 
 # Basic Example
 
@@ -35,7 +35,7 @@ $ lua MarkdownProjectCompositor.lua example/feature/config.lua example/feature
 
 # Live Example
 
-<http://suchang.net/>  
+<http://suchang.net>  
 <http://suchang.net/blog>
 
 with [config.lua](https://github.com/lalawue/homepage/blob/master/misc/config.lua)
