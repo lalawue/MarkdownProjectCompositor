@@ -3,6 +3,8 @@
 
 [MarkdownProjectCompositor](https://github.com/lalawue/MarkdownProjectCompositor) is a static markdown generator with compositor, using [CommonMark](https://github.com/commonmark/cmark), or [cmark-gfm](https://github.com/github/cmark-gfm) as its rendering engine.
 
+[中文](http://suchang.net/blog/2019-06.html#p1)
+
 # Require
 
 - lua, only test under 5.3.4
@@ -30,4 +32,11 @@ support more markdown syntax as:
 ```
 $ lua MarkdownProjectCompositor.lua example/feature/config.lua example/feature
 ```
+
+# Live Example
+
+<http://suchang.net/>
+<http://suchang.net/blog>
+
+with [config.lua](https://github.com/lalawue/homepage/blob/master/misc/config.lua)
 
