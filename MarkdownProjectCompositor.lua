@@ -18,9 +18,9 @@ local md = {}                   -- markdown parser interface
 local site = {}                 -- site inteface
 
 -- config file example
--- {
+-- local config = {
 --    source = "/Markdown/Source/Path", -- will be modified by compositor
---    bulid = "/Html/Output/Path",      -- will be modified by compositor
+--    publish = "/Html/Output/Path",    -- will be modified by compositor
 --    suffix = ".html",                 -- output suffix
 --    program = "cmark-gfm",            -- program used
 --    params = " -t html --unsafe --github-pre-lang ",    -- params
@@ -58,6 +58,7 @@ local site = {}                 -- site inteface
 --       end,
 --    },
 -- }
+-- return config
 
 --
 -- debug function
@@ -218,7 +219,7 @@ function site.fillProjFiles( config )
       local i = 0
       for _, proj in ipairs(config.projs) do
          if proj.res then
-            proj.files = fs.listFiles(config.build .. '/' .. proj.dir)            
+            proj.files = fs.listFiles(config.publish .. '/' .. proj.dir)            
          else
             proj.files = fs.listFiles(config.source .. '/' .. proj.dir)
             validProjs = validProjs + #proj.files
@@ -238,7 +239,7 @@ function site.loadConfig( path )
 
    assert(type(config) == "table")
    assert(type(config.source) == "string")
-   assert(type(config.build) == "string")
+   assert(type(config.publish) == "string")
    assert(type(config.projs) == "table")
    assert(#config.projs > 0)
    for _, proj in ipairs(config.projs) do
@@ -264,7 +265,7 @@ function site.processProjects( config )
       for _, proj in ipairs(config.projs) do
          
          local inPath = config.source .. "/" .. proj.dir .. "/"         
-         local outPath = config.build .. "/" .. proj.dir .. "/"
+         local outPath = config.publish .. "/" .. proj.dir .. "/"
 
          if not proj.res then
             dbg.print(string.format("\nproj: %s", proj.dir))
@@ -303,7 +304,7 @@ function site.main( configFile, basePath )
       assert(config)
       if basePath then
          config.source = basePath .. "/" .. config.source
-         config.build = basePath .. "/" .. config.build
+         config.publish = basePath .. "/" .. config.publish
       end
       site.processProjects( config )
    end
