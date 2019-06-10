@@ -15,6 +15,10 @@ test footnote[1](#fn1)
 <br/>
 <br/>
 
+link [images#pp.jpg](images#pp.jpg) as
+
+![img](images#pp.jpg)
+
 
 ## Blab 2
 
