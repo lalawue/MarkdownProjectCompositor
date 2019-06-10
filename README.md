@@ -35,8 +35,12 @@ $ lua MarkdownProjectCompositor.lua example/feature/config.lua example/feature
 
 # Live Example
 
-<http://suchang.net/>
+<http://suchang.net/>  
 <http://suchang.net/blog>
 
 with [config.lua](https://github.com/lalawue/homepage/blob/master/misc/config.lua)
+
+# Markdown Editor
+
+recommand <https://github.com/jbt/markdown-editor>, [try it online](jbt.github.io/markdown-editor)
 
