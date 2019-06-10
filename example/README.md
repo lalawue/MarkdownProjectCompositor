@@ -1,4 +1,0 @@
-
-# Example
-
-to be continued.
