@@ -207,7 +207,7 @@ end
 
 function site.isArgsValid( config )
    if not config then
-      print("Usage: CONFIG_FILE")
+      print("Usage: CONFIG_FILE [PROJ_DIR]")
       os.exit(0)
    end
    return true
