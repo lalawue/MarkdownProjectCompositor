@@ -24,11 +24,13 @@ $ lua MarkdownProjectCompositor.lua example/basic/config.lua example/basic
 
 # Feature Example
 
-support more markdown syntax as:
-- '\#title' \<h1> title and html \<head>\<title>
+extend markdown syntax, '^' is newline:
+
+- '^\#title' \<h1> title and html \<head>\<title>
+- link anchor '^\#anchor'
 - proj markdown file link as '\[desc]\(proj\#file\#anchor)'
 - footnote with paired '\[desc]\(\#name)'
-- contents with '\#contents depth'
+- contents with '^\#contents depth'
 
 ```
 $ lua MarkdownProjectCompositor.lua example/feature/config.lua example/feature
