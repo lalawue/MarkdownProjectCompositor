@@ -7,7 +7,8 @@
 
 # Require
 
-- lua, only test under 5.3.4
+- [lua](https://github.com/lua/lua)
+- [luafilesystem](https://github.com/keplerproject/luafilesystem)
 - markdown rendering engine, like [cmark-gfm](https://github.com/github/cmark-gfm)
 
 # Features
