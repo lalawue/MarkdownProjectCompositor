@@ -44,6 +44,9 @@ local site = {}                 -- site inteface
 --          footer = function( config, proj, filename )
 --             -- return content append in dest tail
 --          end,
+--          after = function( config, proj )
+--             -- after all files generated
+--          end,
 --       },
 --    },
 --    -- user defines below
@@ -58,7 +61,7 @@ local site = {}                 -- site inteface
 --       end,
 --    },
 -- }
--- return config
+--return config
 
 --
 -- debug function
@@ -250,49 +253,56 @@ function site.loadConfig( path )
          assert((not proj.body) or (type(proj.body) == "function"))
          assert((not proj.header) or (type(proj.header) == "function"))
          assert((not proj.footer) or (type(proj.footer) == "function"))
+         assert((not proj.after) or (type(proj.after) == "function"))
       end
    end
    return config
 end
 
 function site.processProjects( config )
-   if site.fillProjFiles( config ) then
+   if not site.fillProjFiles( config ) then
+      return
+   end
 
-      -- dbg.print("----- using config -----")
-      -- dbg.print( config )
-      -- dbg.print("----- ----- ----- -----")
-      
-      for _, proj in ipairs(config.projs) do
+   -- dbg.print("----- using config -----")
+   -- dbg.print( config )
+   -- dbg.print("----- ----- ----- -----")
+
+   for _, proj in ipairs(config.projs) do
+
+      if not proj.res then
          
          local inPath = config.source .. "/" .. proj.dir .. "/"         
          local outPath = config.publish .. "/" .. proj.dir .. "/"
 
-         if not proj.res then
-            dbg.print(string.format("\nproj: %s", proj.dir))
-            fs.makeDir( outPath )
+         dbg.print(string.format("\nproj: %s", proj.dir))
+         fs.makeDir( outPath )
 
-            if proj.prepare then
-               proj.prepare( config, proj )
+         if proj.prepare then
+            proj.prepare( config, proj )
+         end
+
+         local i = 0
+         while true do
+            i = i + 1
+
+            if i > #proj.files then
+               break
             end
-            
-            local i = 0
-            while true do
-               i = i + 1
 
-               if i > #proj.files then
-                  break
-               end
+            local filename = proj.files[i]
+            local sourceFile = inPath .. filename -- origin source
+            local tempFile = kTmpFilePath         -- modified source
+            local destFile = outPath .. filename .. (config.suffix or "") -- formated output 
 
-               local filename = proj.files[i]
-               local sourceFile = inPath .. filename -- origin source
-               local tempFile = kTmpFilePath         -- modified source
-               local destFile = outPath .. filename .. (config.suffix or "") -- formated output 
+            md.prepareTempSource( config, proj, filename, sourceFile, tempFile )
+            md.compositeHeader( config, proj, filename, destFile )
+            md.compositeBody( config, proj, filename, tempFile, destFile )
+            md.compositeFooter( config, proj, filename, destFile )
+         end
 
-               md.prepareTempSource( config, proj, filename, sourceFile, tempFile )
-               md.compositeHeader( config, proj, filename, destFile )
-               md.compositeBody( config, proj, filename, tempFile, destFile )
-               md.compositeFooter( config, proj, filename, destFile )
-            end
+         if proj.after then
+            proj.after( config, proj )
          end
       end
    end
