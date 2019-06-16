@@ -4,7 +4,11 @@
 --
 -- base on cmark-gfm, lfs, by lalawue, 2019/06/02
 
-local lfs = require "lfs"
+local envReadAll = (_VERSION:sub(5) < "5.3") and "*a" or "a"
+local envIsJit = (type(jit) == 'table')
+
+local lfs = envIsJit and require("lfs_ffi") or require("lfs")
+assert(lfs)
 
 local kCMarkProgram = "cmark-gfm"
 local kCMarkParams = " -t html --unsafe --github-pre-lang "
@@ -116,7 +120,7 @@ function fs.readContent( path )
    if not fs.isDir( path ) then
       local f = io.open( path, "r" )
       if f then
-         local content = f:read("a")
+         local content = f:read(envReadAll)
          f:close()
          return content
       end

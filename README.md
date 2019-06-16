@@ -7,8 +7,8 @@
 
 # Require
 
-- [lua](https://github.com/lua/lua)
-- [luafilesystem](https://github.com/keplerproject/luafilesystem)
+- [Lua](https://www.lua.org/) or [LuaJIT](http://luajit.org/)
+- [luafilesystem](https://github.com/keplerproject/luafilesystem) or [luafilesystem via LuaJIT FFI](https://github.com/sonoro1234/luafilesystem)
 - markdown rendering engine, like [cmark-gfm](https://github.com/github/cmark-gfm)
 
 # Features
