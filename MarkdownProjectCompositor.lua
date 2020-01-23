@@ -133,7 +133,7 @@ end
 
 function fs.readContent( path )
    if not fs.isDir( path ) then
-      local f = io.open( path, "r" )
+      local f = io.open( path, "rb" )
       if f then
          local content = f:read(envReadAll)
          f:close()
@@ -145,7 +145,7 @@ end
 
 function fs.writeContent(path, content, append)
    if not fs.isDir( path ) and type(content) == "string" then
-      local f = io.open( path, append and "a+" or "w")
+      local f = io.open( path, append and "ab" or "wb")
       if f then
          local valid, errString = f:write(content)
          f:close()
