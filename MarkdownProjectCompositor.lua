@@ -29,6 +29,7 @@ local site = {}                 -- site inteface
 --    program = "cmark-gfm",            -- program used
 --    params = " -t html --unsafe --github-pre-lang ",    -- params
 --    tmpfile = "/tmp/MarkdownProjectCompositorTempFile", -- temp file
+--    dos2unix = true,                  -- convert CRLF to LF, remove CR
 --    projs = {
 --       {
 --          res = true,      -- resouces dir, when true do not build output
@@ -103,6 +104,15 @@ end
 -- fs function
 --
 
+local _isWinOS = nil
+function fs.isWinOS()
+   if _isWinOS == nil then
+      local path = os.getenv("PATH")
+      _isWinOS = path:find("C:\\") or path:find("c:\\")
+   end
+   return _isWinOS
+end
+
 function fs.isDir( path )
    local attr = lfs.attributes(path)
    return (type(attr) == "table") and (attr.mode == "directory")
@@ -110,7 +120,12 @@ end
 
 function fs.makeDir( path )
    if type(path) == "string" and not fs.isDir(path) then
-      local cmd = "mkdir -p " .. path
+      local cmd = nil
+      if fs.isWinOS() then
+         cmd = "mkdir " .. path:gsub("/", "\\")
+      else
+         cmd = "mkdir -p " .. path
+      end
       dbg.print(cmd)
       os.execute(cmd)
    end
@@ -208,6 +223,17 @@ function md.compositeFooter( config, proj, filename, destFile )
    end
 end
 
+function md.convertDos2unix( config, destFile )
+   if config.dos2unix and destFile then
+      local content = fs.readContent( destFile )
+      if content then
+         content = content:gsub("(\r\n)", '\n')
+         content = content:gsub("(\r)", '')
+         fs.writeContent(destFile, content)
+      end
+   end
+end
+
 --
 -- site function
 --
@@ -296,13 +322,14 @@ function site.processProjects( config )
 
             local filename = proj.files[i]
             local sourceFile = inPath .. filename -- origin source
-            local tempFile = kTmpFilePath         -- modified source
+            local tempFile = config.tmpfile or kTmpFilePath -- modified source
             local destFile = outPath .. filename .. (config.suffix or "") -- formated output 
 
             md.prepareTempSource( config, proj, filename, sourceFile, tempFile )
             md.compositeHeader( config, proj, filename, destFile )
             md.compositeBody( config, proj, filename, tempFile, destFile )
             md.compositeFooter( config, proj, filename, destFile )
+            md.convertDos2unix( config, destFile )
          end
 
          if proj.after then
