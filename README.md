@@ -3,6 +3,8 @@
 
 [MarkdownProjectCompositor](https://github.com/lalawue/MarkdownProjectCompositor) is a static markdown generator with compositor, using [CommonMark](https://github.com/commonmark/cmark), or [cmark-gfm](https://github.com/github/cmark-gfm) as its rendering engine.
 
+and provide a pre-compiled windows version in [releases](https://github.com/lalawue/MarkdownProjectCompositor/releases), include cmark-gfm.exe, luajit.exe and lfs_ffi.lua.
+
 [中文](http://suchang.net/blog/2019-06.html#p1)
 
 # Require
