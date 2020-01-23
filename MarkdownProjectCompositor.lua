@@ -330,13 +330,14 @@ function site.processProjects( config )
             md.compositeBody( config, proj, filename, tempFile, destFile )
             md.compositeFooter( config, proj, filename, destFile )
             md.convertDos2unix( config, destFile )
-         end
+         end -- while
 
          if proj.after then
             proj.after( config, proj )
          end
-      end
-   end
+      end -- proj.res
+   end -- for _, proj
+   os.remove(config.tmpfile or kTmpFilePath)   
 end
 
 function site.main( configFile, basePath )
