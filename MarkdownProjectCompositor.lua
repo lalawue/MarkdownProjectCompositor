@@ -12,7 +12,7 @@ assert(lfs)
 
 local kCMarkProgram = "cmark-gfm"
 local kCMarkParams = " -t html --unsafe --github-pre-lang "
-local kTmpFilePath = "/tmp/MarkdownSiteGeneratorTempFile"
+local kTmpFilePath = (os.getenv("TMP") or "/tmp") .. "/MarkdownSiteGeneratorTempFile"
 
 local argConfigFile, argBasePath = ...
 
@@ -268,7 +268,13 @@ function site.loadConfig( path )
       return nil
    end
 
-   local config = dofile(path)
+   local function _err_handler(msg)
+      print("\nPANIC : " .. tostring(msg) .. "\n")
+      print(debug.traceback())
+   end
+   local status, config = xpcall(dofile, _err_handler, path)
+   assert(status)
+   assert(config)
 
    assert(type(config) == "table")
    assert(type(config.source) == "string")

@@ -1,1 +1,3 @@
 *.html
+*.lua
+!MarkdownProjectCompositor.lua
