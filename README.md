@@ -47,5 +47,6 @@ with [config.lua](https://github.com/lalawue/homepage/blob/master/misc/config.lu
 
 # Markdown Editor
 
-recommand <https://github.com/jbt/markdown-editor>, [try it online](jbt.github.io/markdown-editor)
+- recommand VSCode with [Markdown All in One](https://marketplace.visualstudio.com/items?itemName=yzhang.markdown-all-in-one)
+- or <https://github.com/jbt/markdown-editor>, [try it online](jbt.github.io/markdown-editor)
 

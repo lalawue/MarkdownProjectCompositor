@@ -25,11 +25,13 @@ local site = {}                 -- site inteface
 -- local config = {
 --    source = "/Markdown/Source/Path", -- will be modified by compositor
 --    publish = "/Html/Output/Path",    -- will be modified by compositor
---    suffix = ".html",                 -- output suffix
 --    program = "cmark-gfm",            -- program used
 --    params = " -t html --unsafe --github-pre-lang ",    -- params
 --    tmpfile = "/tmp/MarkdownProjectCompositorTempFile", -- temp file
 --    dos2unix = true,                  -- convert CRLF to LF, remove CR
+--    destname = function(filename)     -- from '2020-05' to '2020-05.html'
+--       return dest_filename
+--    end
 --    projs = {
 --       {
 --          res = true,      -- resouces dir, when true do not build output
@@ -304,6 +306,8 @@ function site.processProjects( config )
    -- dbg.print( config )
    -- dbg.print("----- ----- ----- -----")
 
+   local to_destname = config.destname or function(f) return f end
+
    for _, proj in ipairs(config.projs) do
 
       if not proj.res then
@@ -329,7 +333,7 @@ function site.processProjects( config )
             local filename = proj.files[i]
             local sourceFile = inPath .. filename -- origin source
             local tempFile = config.tmpfile or kTmpFilePath -- modified source
-            local destFile = outPath .. filename .. (config.suffix or "") -- formated output 
+            local destFile = outPath .. to_destname(filename) -- formated output
 
             md.prepareTempSource( config, proj, filename, sourceFile, tempFile )
             md.compositeHeader( config, proj, filename, destFile )
