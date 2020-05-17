@@ -5,6 +5,14 @@ local user = {
    projNames = nil,             -- table [projName][FileName]   
 }
 
+function user.filename(f)
+   if f:find("%.md") then
+      return f:sub(1, f:len() - 3)
+   else
+      return f
+   end
+end
+
 function user.writeFile( path, content )
    local f = io.open(path, "w")
    if f then
@@ -26,9 +34,9 @@ end
 
 function user.mdGetTitle( config, proj, filename )
    -- '#title title', for <title> or <h1> tag
-   local path = config.source .. "/" .. proj.dir .. "/" .. filename
+   local path = config.source .. "/" .. proj.dir .. "/" .. filename .. ".md"
    local content = config.user.readFile( path )
-   content = content:len() > 1 and content or config.user.blogTempContent[filename]
+   content = content:len() > 1 and content
    if content then
       local name = content:match("#title%s+([^\n]+)")
       if name then
@@ -150,6 +158,7 @@ function user.sitePrepare( config, proj )
             if proj.res then
                projNames[proj.dir][f] = f
             else
+               f = user.filename(f)
                projNames[proj.dir][f] = f .. ".html"
             end
          end
@@ -169,6 +178,7 @@ function user.siteBody( config, proj, filename, content )
 end
 
 function user.siteHeader( config, proj, filename )
+   filename = user.filename(filename)
    local part1 = [[<html><head><title> Site Title -]]
    local part2 = config.user.mdGetTitle( config, proj, filename )
    local part3 = [[</title></head></html><body>]]
@@ -194,6 +204,7 @@ function user.blogBody( config, proj, filename, content )
 end
 
 function user.blogHeader( config, proj, filename )
+   filename = user.filename(filename)
    local part1 = [[<html><head><title> Blog Title -]]
    local part2 = config.user.mdGetTitle( config, proj, filename )
    local part3 = [[</title></head></html></body>]]
@@ -207,7 +218,9 @@ end
 local config = {
    source = "source", -- will be modified by compositor
    publish = "publish",      -- will be modified by compositor
-   suffix = ".html",                 -- output suffix
+   destname = function(f)    -- input name to output name
+      return user.filename(f) .. ".html"
+   end,
    program = "cmark-gfm",            -- program used
    params = " -t html --unsafe --github-pre-lang ",    -- params
    tmpfile = "/tmp/MarkdownProjectCompositorTempFile", -- temp file

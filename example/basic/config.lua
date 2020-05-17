@@ -1,8 +1,14 @@
 local config = {
    source = "source", -- will be modified by compositor
    publish = "publish",      -- will be modified by compositor
-   suffix = ".html",                 -- output suffix
-   program = "cmark-gfm",            -- program used
+   destname = function(f)    -- input name to output name
+      if f:find("%.md") then
+         return f:sub(1, f:len() - 3) .. ".html"
+      else
+         return f .. ".html"
+      end
+   end,
+   program = "cmark-gfm",                              -- program used
    params = " -t html --unsafe --github-pre-lang ",    -- params
    tmpfile = "/tmp/MarkdownProjectCompositorTempFile", -- temp file
    projs = {
