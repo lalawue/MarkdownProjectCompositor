@@ -29,7 +29,7 @@ local site = {}                 -- site inteface
 --    params = " -t html --unsafe --github-pre-lang ",    -- params
 --    tmpfile = "/tmp/MarkdownProjectCompositorTempFile", -- temp file
 --    dos2unix = true,                  -- convert CRLF to LF, remove CR
---    destname = function(filename)     -- from '2020-05' to '2020-05.html'
+--    destname = function(filename)     -- from '2020-05.md' to '2020-05.html'
 --       return dest_filename
 --    end
 --    projs = {
