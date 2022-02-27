@@ -11,7 +11,7 @@ local lfs = envIsJit and require("lfs_ffi") or require("lfs")
 assert(lfs)
 
 local kCMarkProgram = "cmark-gfm"
-local kCMarkParams = " -t html --unsafe --github-pre-lang "
+local kCMarkParams = " -t html --unsafe "
 local kTmpFilePath = (os.getenv("TMP") or "/tmp") .. "/MarkdownSiteGeneratorTempFile"
 
 local argConfigFile, argBasePath = ...
