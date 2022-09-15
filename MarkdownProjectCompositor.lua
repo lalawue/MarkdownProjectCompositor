@@ -7,7 +7,14 @@
 local envReadAll = (_VERSION:sub(5) < "5.3") and "*a" or "a"
 local envIsJit = (type(jit) == 'table')
 
-local lfs = envIsJit and require("lfs_ffi") or require("lfs")
+local function _require(libname)
+   local ret, lib = pcall(require, libname)
+   if ret then
+      return lib
+   end
+end
+
+local lfs = envIsJit and _require("lfs") or _require("lfs_ffi")
 assert(lfs)
 
 local kCMarkProgram = "cmark-gfm"
