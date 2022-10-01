@@ -52,6 +52,9 @@ local site = {}                 -- site inteface
 --          body = function( config, proj, filename, content )
 --             -- return modified source content before cmark process
 --          end,
+--          post = function( config, proj, filename, content)
+--             -- return adjusted HTML after cmark process
+--          end,
 --          header = function( config, porj, filename )
 --             -- return content append in dest head
 --          end,
@@ -81,7 +84,7 @@ local site = {}                 -- site inteface
 -- debug function
 --
 function dbg.print( value, key, level, onlyipairs )
-   
+
    if type(value) == "table" then
       if level then
          print(string.rep(".", level) .. key .. " <table>")
@@ -89,7 +92,7 @@ function dbg.print( value, key, level, onlyipairs )
 
       if onlyipairs then
          for k, v in ipairs(value) do
-            dbg.print( v, k, level and (level + 1) or 0 )            
+            dbg.print( v, k, level and (level + 1) or 0 )
          end
       else
          for k, v in pairs(value) do
@@ -100,7 +103,7 @@ function dbg.print( value, key, level, onlyipairs )
       if level then
          io.write(string.rep(".", level))
       end
-      
+
       if key then
          print( key .. " " .. tostring(value))
       else
@@ -202,7 +205,7 @@ end
 --
 
 function md.prepareTempSource( config, proj, filename, sourceFile, tempFile )
-   local content = fs.readContent( sourceFile )   
+   local content = fs.readContent( sourceFile )
    if proj.body then
       content = proj.body( config, proj, filename, content )
    end
@@ -212,7 +215,7 @@ end
 function md.compositeHeader( config, proj, filename, destFile )
    if proj.header then
       local content = proj.header( config, proj, filename )
-      if type(content) == "string" then      
+      if type(content) == "string" then
          assert( fs.writeContent( destFile, content ) )
       end
    end
@@ -221,6 +224,13 @@ end
 function md.compositeBody( config, proj, filename, tempFile, destFile )
    dbg.print("output: " .. destFile )
    os.execute( kCMarkProgram .. kCMarkParams .. tempFile .. " >> " .. destFile )
+   if proj.post then
+      local content =  fs.readContent( destFile )
+      content = proj.post( config, proj, filename, content)
+      if type(content) == "string" and content then
+         assert( fs.writeContent( destFile, content) )
+      end
+   end
 end
 
 function md.compositeFooter( config, proj, filename, destFile )
@@ -256,12 +266,12 @@ function site.isArgsValid( config )
 end
 
 function site.fillProjFiles( config )
-   local validProjs = 0   
+   local validProjs = 0
    if config then
       local i = 0
       for _, proj in ipairs(config.projs) do
          if proj.res then
-            proj.files = fs.listFiles(config.publish .. '/' .. proj.dir)            
+            proj.files = fs.listFiles(config.publish .. '/' .. proj.dir)
          else
             proj.files = fs.listFiles(config.source .. '/' .. proj.dir)
             validProjs = validProjs + #proj.files
@@ -296,6 +306,7 @@ function site.loadConfig( path )
       if not proj.res then
          assert((not proj.prepare) or (type(proj.prepare) == "function"))
          assert((not proj.body) or (type(proj.body) == "function"))
+         assert((not proj.post) or (type(proj.post) == "function"))
          assert((not proj.header) or (type(proj.header) == "function"))
          assert((not proj.footer) or (type(proj.footer) == "function"))
          assert((not proj.after) or (type(proj.after) == "function"))
@@ -318,8 +329,8 @@ function site.processProjects( config )
    for _, proj in ipairs(config.projs) do
 
       if not proj.res then
-         
-         local inPath = config.source .. "/" .. proj.dir .. "/"         
+
+         local inPath = config.source .. "/" .. proj.dir .. "/"
          local outPath = config.publish .. "/" .. proj.dir .. "/"
 
          dbg.print(string.format("\nproj: %s", proj.dir))
@@ -354,7 +365,7 @@ function site.processProjects( config )
          end
       end -- proj.res
    end -- for _, proj
-   os.remove(config.tmpfile or kTmpFilePath)   
+   os.remove(config.tmpfile or kTmpFilePath)
 end
 
 function site.main( configFile, basePath )
